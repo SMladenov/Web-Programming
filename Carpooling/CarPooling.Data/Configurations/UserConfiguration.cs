@@ -1,4 +1,5 @@
 ﻿using CarPooling.Data.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.Data;
@@ -13,7 +14,6 @@ namespace CarPooling.Data.Configurations
             builder.Property(u => u.FirstName).IsRequired(false);
             builder.Property(u => u.LastName).IsRequired(false);
             builder.Property(u => u.AddressId).IsRequired(false);
-
 
             //builder.HasOne(u => u.Travel)
             //    .WithMany(t => t.Passengers)
@@ -47,8 +47,8 @@ namespace CarPooling.Data.Configurations
             //    .OnDelete(DeleteBehavior.NoAction);
 
             //builder.HasMany(u => u.Cars)
-            //    .WithOne(c => c.User)
-            //    .HasForeignKey(c => c.UserId)
+            //    .WithOne(c => c.Driver)
+            //    .HasForeignKey(c => c.DriverId)
             //    .OnDelete(DeleteBehavior.NoAction);
         }
 

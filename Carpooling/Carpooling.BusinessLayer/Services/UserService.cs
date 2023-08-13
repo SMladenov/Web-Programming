@@ -72,6 +72,13 @@ namespace Carpooling.BusinessLayer.Services
 
             return "User successfully deleted.";
         }
+        public async Task<string> DeleteUserWhenAdminAsync(string id)
+        {
+            var userToDelete = await this.userRepository.GetByIdAsync(id);
+            await userRepository.DeleteAsync(userToDelete.Id);
+            await _userManager.DeleteAsync(userToDelete);
+            return "User successfully deleted.";
+        }
 
         public async Task<IEnumerable<UserResponse>> GetAllAsync()
         {
@@ -87,7 +94,16 @@ namespace Carpooling.BusinessLayer.Services
 
             //return result.Select(x => mapper.Map<UserResponse>(x));
         }
-
+        public async Task<IEnumerable<User>> GetAllUsersAsync()
+        {
+            var result = await this.userRepository.GetAllAsync();
+            return result;
+        }
+        public async Task<User> GetUserByIdAsync(string id)
+        {
+            var user = await this.userRepository.GetByIdAsync(id);
+            return user;
+        }
         public async Task<UserResponse> GetByIdAsync(string id)
         {
             var user = await this.userRepository.GetByIdAsync(id);
@@ -160,6 +176,18 @@ namespace Carpooling.BusinessLayer.Services
             //await this._userManager.UpdateAsync(this.mapper.Map<User>(userUpdateDto));
             //return this.mapper.Map<UserResponse>(this.userRepository.GetByIdAsync(id));
         }
+        public async Task<string> BanUserById(string id)
+        {
+            var userToGetBanned = await userRepository.GetByIdAsync(id);
+            
+            return await userRepository.BanUser(userToGetBanned); 
+        }
+        public async Task<string> UnbanUserById(string id)
+        {
+            var userToGetUnbanned = await userRepository.GetByIdAsync(id);
+
+            return await userRepository.UnBanUser(userToGetUnbanned);
+        }
         public async Task<string> BanUser(User loggedUser, BanOrUnBanDto userToBeBanned)
         {
             await this.userValidator.ValidateIfUsernameExist(userToBeBanned.Username);
@@ -228,5 +256,33 @@ namespace Carpooling.BusinessLayer.Services
             return await this.userRepository.GetTopPassengers(result, count);
         }
 
+        public async Task ConvertToAdministrator(string id)
+        {
+            await userRepository.ConvertToAdministrator(id);
+        }
+
+        public async Task<UserResponse> GetByEmailAsync(string email)
+        {
+            var user = await this.userRepository.GetByEmailAsync(email);
+
+            return new UserResponse(
+               user.FirstName,
+               user.LastName,
+               user.UserName,
+               user.Email,
+               user.AverageRating);
+        }
+
+        public async Task<UserResponse> GetByPhoneNumberAsync(string email)
+        {
+            var user = await this.userRepository.GetByPhoneNumberAsync(email);
+
+            return new UserResponse(
+               user.FirstName,
+               user.LastName,
+               user.UserName,
+               user.Email,
+               user.AverageRating);
+        }
     }
 }

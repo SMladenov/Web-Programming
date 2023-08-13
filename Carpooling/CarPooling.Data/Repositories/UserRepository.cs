@@ -15,13 +15,13 @@ namespace CarPooling.Data.Repositories
     public class UserRepository : IUserRepository
     {
         private readonly CarPoolingDbContext dbContext;
-        private readonly UserManager<User> userManger;
+        private readonly UserManager<User> userManager;
 
 
         public UserRepository(CarPoolingDbContext dbContext, UserManager<User> userManger)
         {
             this.dbContext = dbContext;
-            this.userManger = userManger;
+            this.userManager = userManger;
         }
 
         public async Task<User> CreateAsync(User user)
@@ -51,6 +51,11 @@ namespace CarPooling.Data.Repositories
 
         public async Task<IEnumerable<User>> GetAllAsync()
         {
+            if(dbContext.Users.Count()==0)
+            {
+                throw new EmptyListException("No users yet!");
+            }
+
             return dbContext.Users
              .Where(x => !x.IsDeleted)
              .Include(x=>x.Cars)
@@ -93,7 +98,32 @@ namespace CarPooling.Data.Repositories
 
             return user;
         }
+        public async Task<User> GetByEmailAsync(string email)
+        {
+            var user = dbContext.Users
+             .Where(x => !x.IsDeleted)
+             .FirstOrDefault(x => x.Email == email);
 
+            if (user is null)
+            {
+                throw new EntityNotFoundException($"User with email:{email} not found.");
+            }
+
+            return user;
+        }
+        public async Task<User> GetByPhoneNumberAsync(string phoneNumber)
+        {
+            var user = dbContext.Users
+             .Where(x => !x.IsDeleted)
+             .FirstOrDefault(x => x.PhoneNumber == phoneNumber);
+
+            if (user is null)
+            {
+                throw new EntityNotFoundException($"User with phone number:{phoneNumber} not found.");
+            }
+
+            return user;
+        }
         public async Task<IEnumerable<Travel>> TravelHistoryAsync(string userId)
         {
             var user = await GetByIdAsync(userId);
@@ -119,7 +149,7 @@ namespace CarPooling.Data.Repositories
             userToUpdate.PasswordHash = user.PasswordHash ?? userToUpdate.PasswordHash;
             userToUpdate.Email = user.Email ?? userToUpdate.Email;
 
-            await this.userManger.UpdateAsync(userToUpdate);
+            await this.userManager.UpdateAsync(userToUpdate);
 
             return userToUpdate;
         }
@@ -171,5 +201,17 @@ namespace CarPooling.Data.Repositories
 
             return users.OrderByDescending(x => x.AverageRating);
         }
+        public async Task ConvertToAdministrator(string id) 
+        {
+            var user = await this.GetByIdAsync(id);
+
+            var roles = await userManager.GetRolesAsync(user);
+
+            await userManager.AddToRoleAsync(user, "Administrator");
+
+            await dbContext.SaveChangesAsync();
+        }
+
+        
     }
 }

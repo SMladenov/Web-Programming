@@ -64,9 +64,14 @@ namespace CarPooling.Data.Repositories
         public async Task<TripRequest> CreateAsync(string driverId, string passengerId, int travelId)
         {
             var tripRequest = new TripRequest(passengerId, travelId);
-
+            var travel = await this.dbContext.Travels.Include(x => x.StartLocation).Include(x => x.EndLocation).Include(x => x.Car).FirstOrDefaultAsync(x => x.Id == travelId);
             var driver = this.dbContext.Users.FirstOrDefault(x => x.Id == driverId);
             var passenger = this.dbContext.Users.FirstOrDefault(x => x.Id == passengerId);
+
+            tripRequest.Travel = travel;
+            tripRequest.Driver = driver;
+            tripRequest.Passenger = passenger;
+            this.dbContext.Update(tripRequest);
 
             passenger.PassengerTripRequests.Add(tripRequest);
             driver.DriverTripRequests.Add(tripRequest);
@@ -75,6 +80,19 @@ namespace CarPooling.Data.Repositories
             await dbContext.SaveChangesAsync();
 
             return (tripRequest);
+
+            //var tripRequest = new TripRequest(passengerId, travelId);
+
+            //var driver = this.dbContext.Users.FirstOrDefault(x => x.Id == driverId);
+            //var passenger = this.dbContext.Users.FirstOrDefault(x => x.Id == passengerId);
+
+            //passenger.PassengerTripRequests.Add(tripRequest);
+            //driver.DriverTripRequests.Add(tripRequest);
+
+            //await this.dbContext.TripRequests.AddAsync(tripRequest);
+            //await dbContext.SaveChangesAsync();
+
+            //return (tripRequest);
         }
         public async Task<string> EditRequestAsync(TripRequest tripRequestToUpdate, string answer)
         {
@@ -111,6 +129,7 @@ namespace CarPooling.Data.Repositories
             var tripRequests = await dbContext.TripRequests
                      .Where(x => !x.IsDeleted)
                      .Include(x => x.Travel)
+                            .ThenInclude(x=>x.EndLocation)
                      .Include(x=>x.Driver)
                      .Include(x => x.Travel)
                           .ThenInclude(x => x.StartLocation)
@@ -124,6 +143,30 @@ namespace CarPooling.Data.Repositories
             {
                 throw new EntityNotFoundException($"Driver with Id: {userId} does not have any recipient requests");
             }
+
+            return tripRequests;
+        }
+
+        public async Task<IEnumerable<TripRequest>> SeeAllHisDriverRequestsMVCAsync(string userId)
+        {
+            var tripRequests = await dbContext.TripRequests
+                     .Where(x => !x.IsDeleted)
+                     .Where(x => x.Travel.IsCompleted == false)
+                     .Include(x => x.Travel)
+                            .ThenInclude(x => x.EndLocation)
+                     .Include(x => x.Driver)
+                     .Include(x => x.Travel)
+                          .ThenInclude(x => x.StartLocation)
+                     .Include(x => x.Passenger)
+                          .ThenInclude(x => x.Address)
+
+                          //NEW
+                     .Include(x => x.Passenger)
+              //            .ThenInclude(x => x.Id)
+
+                     .Where(x => x.DriverId == userId)
+                     .ToListAsync() ?? Enumerable.Empty<TripRequest>();
+
 
             return tripRequests;
         }
@@ -147,6 +190,49 @@ namespace CarPooling.Data.Repositories
             }
 
             return tripRequests;
+        }
+
+        public async Task<IEnumerable<TripRequest>> SeeAllHisPassengerRequestsMVCAsync(string passengerId)
+        {
+            var tripRequests = await dbContext.TripRequests
+             .Where(x => !x.IsDeleted)
+             .Where(x => x.Travel.IsCompleted == false)
+             .Include(x => x.Travel)
+                      .ThenInclude(x => x.EndLocation)
+             .Include(x => x.Travel)
+                      .ThenInclude(x => x.StartLocation)
+             .Include(x => x.Driver)
+             .Include(x => x.Passenger)
+                     .ThenInclude(x => x.Address)
+             .Where(x => x.PassengerId == passengerId)
+             .ToListAsync() ?? Enumerable.Empty<TripRequest>();
+
+
+
+
+
+
+
+
+
+
+            //var tripRequests = await dbContext.TripRequests
+            //     .Where(x => !x.IsDeleted)
+            //     .Include(x => x.Travel)
+            //          .ThenInclude (x => x.EndLocation)
+
+
+
+            //     .Include(x => x.Driver)
+            //     .Include(x => x.Travel)
+            //          .ThenInclude(x => x.StartLocation)
+            //     .Include(x => x.Passenger)
+            //          .ThenInclude(x => x.Address)
+            //     .Where(x => x.PassengerId == passengerId)
+            //     .ToListAsync() ?? Enumerable.Empty<TripRequest>();
+
+            return tripRequests;
+            //return tripRequests.Where(x => !(x.Status.ToString().ToLower() == "declined"));
         }
     }
 }

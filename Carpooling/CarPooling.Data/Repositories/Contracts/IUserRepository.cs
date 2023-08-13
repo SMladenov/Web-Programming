@@ -14,6 +14,8 @@ namespace CarPooling.Data.Repositories.Contracts
         Task<IEnumerable<User>> GetAllAsync();
         Task<User> GetByIdAsync(string id);   
         Task<User> GetByUsernameAsync(string username);
+        Task<User> GetByEmailAsync(string email);
+        Task<User> GetByPhoneNumberAsync(string phoneNumber);
         Task<bool> DoesExist(string username);
         Task<IEnumerable<Travel>> TravelHistoryAsync(string userId);
         Task<User> CreateAsync(User user);
@@ -23,6 +25,7 @@ namespace CarPooling.Data.Repositories.Contracts
         Task<string> UnBanUser(User userToBeUnBanned);
         Task<IEnumerable<User>> GetTopTravelOrganizers(IEnumerable<User> users, int count);
         Task<IEnumerable<User>> GetTopPassengers(IEnumerable<User> users, int count);
+        Task ConvertToAdministrator(string id);
 
         //   Task<IEnumerable<Car>> SeeAllCarsAsync(int userId);
         //  Task<IEnumerable<Feedback>> SeeAllPassengerFeedbacksAsync(int userId);

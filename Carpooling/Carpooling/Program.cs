@@ -19,6 +19,7 @@ using CarPooling.Data.DatabaseSeeder;
 using Carpooling.BusinessLayer.Helpers;
 using CarPooling.BusinessLayer.Services;
 using Carpooling.IAssemblyMarker;
+using NToastNotify;
 
 public class Program
 {
@@ -42,12 +43,12 @@ public class Program
 
         //Helpers
         builder.Services.AddScoped<IJsonManager, JsonManager>();
-        builder.Services.AddAutoMapper(typeof(Carpooling.BusinessLayer.Helpers.Mapper));
-        builder.Services.AddScoped<IIdentityHelper,IdentityHelper>();
-
+        builder.Services.AddAutoMapper(typeof(Carpooling.Mapper));
+        builder.Services.AddScoped<IIdentityHelper, IdentityHelper>();
+        builder.Services.AddScoped<HttpClient>();
 
         // Add services to the container
-      //  builder.Services.AddRazorPages();
+        //  builder.Services.AddRazorPages();
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<ICarService, CarService>();
         builder.Services.AddScoped<IAddressService, AddressService>();
@@ -56,6 +57,7 @@ public class Program
         builder.Services.AddScoped<ITravelService, TravelService>();
         builder.Services.AddScoped<ITripRequestService, TripRequestService>();
         builder.Services.AddScoped<IFileUploadService, FileUploadService>();
+        builder.Services.AddScoped<IMapService, MapService>();
         //Add identity services
         builder.Services.AddScoped<UserManager<User>>();
 
@@ -76,8 +78,8 @@ public class Program
         builder.Services.AddScoped<IAddressRepository, AddressRepository>();
         builder.Services.AddScoped<ICarRepository, CarRepository>();
         builder.Services.AddScoped<ICountryRepository, CountryRepository>();
-        builder.Services.AddScoped<IFeedbackRepository,FeedbackRepository>();
-        
+        builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
+
 
 
 
@@ -87,6 +89,18 @@ public class Program
             options.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
         });
 
+        var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy(name: MyAllowSpecificOrigins,
+                              policy =>
+                              {
+                                  policy.WithOrigins("https://kit.fontawesome.com/")
+                                  .AllowAnyHeader()
+                                  .AllowAnyMethod();
+                              });
+        }); ;
+        builder.Services.AddRouting(l => l.LowercaseUrls = true);
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -101,7 +115,7 @@ public class Program
         {
             options.SwaggerEndpoint("/swagger/v1/swagger.json", "Carpooling API V1");
             options.RoutePrefix = "api/swagger";
-           
+            
         });
 
         //Seed DB
@@ -114,7 +128,7 @@ public class Program
 
         app.UseHttpsRedirection();
         app.UseStaticFiles();
-
+        app.UseCors(MyAllowSpecificOrigins);
         app.UseRouting();
         app.UseAuthentication();
 
